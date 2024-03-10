@@ -14,7 +14,6 @@ int generateRandInt(int min, int max)
 // COUNT, MIN, MAX
 int main(int argc, char* argv[])  //argc: keeps count of # of arguments, argv: the arguments
 {
-
     //argv[0] = name of prog
     //argv[1] = 1st arg
     //argv[2] = 2nd arg
@@ -32,36 +31,39 @@ int main(int argc, char* argv[])  //argc: keeps count of # of arguments, argv: t
 
     if (argc != 4)
     {
-        cout << "Error: Not enough arguments" << endl;
+        cerr << "Error: Not enough arguments" << endl;
     }
 
-    ofstream file;
-    file.open("numbers.dat", ios::trunc); //opens file and clears it out
-    if (!file)
+    ofstream outfile;
+    outfile.open("numbers.dat", ios::trunc); //opens file and clears it out
+    if (!outfile)
     {
-        cout << "Error: file not found" << endl;
+        cerr << "Error: file not found" << endl;
     }
-    file.close();
+    outfile.close();
 
     //reopened file
-    file.open("numbers.dat", ios::app); //opens file in append mode
-    if (!file)
+    outfile.open("numbers.dat", ios::app); //opens file in append mode
+    if (!outfile)
     {
-        cout << "Error: file not found" << endl;
+        cerr << "Error: file not found" << endl;
     }
 
 
     //seed rand() time
     srand(time(nullptr));
 
-    for (int i = min; i < max; i++)
+    for (int i = 0; i < count; i++)
     {
         int randInt = generateRandInt(min, max);
-        file << randInt << " ";
+        outfile << randInt << endl;
     }
 
-    file.close();
+    outfile.close();
 
 
     return 0;
 }
+
+// c++ generate.cpp -o gen
+// ./gen 10000 -10000 10000
