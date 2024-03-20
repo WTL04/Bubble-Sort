@@ -2,8 +2,16 @@
 #include <fstream>
 #include <iterator>
 #include <algorithm>
+#include <pthread.h>
 
 using namespace std;
+
+struct sortStuff
+{
+    int *start;
+    int size;
+};
+
 
 int* createArray(ifstream& file, int size)
 {
@@ -28,11 +36,11 @@ int* createArray(ifstream& file, int size)
 int* bubbleSort(int arr[], int size)
 {
 
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size-1; i++)
     {
-        for (int j = i; j < size; j++)
+        for (int j = i+1; j < size; j++)
         {
-            if (arr[j] > arr[i])
+            if (arr[j] < arr[i])
             {
                 int temp = arr[i];
                 arr[i] = arr[j];
@@ -44,6 +52,13 @@ int* bubbleSort(int arr[], int size)
     return arr;
 }
 
+void* bridge(void *ptr)
+{
+    sortStuff *arg = (sortStuff *) ptr; // casting unknown pointer to a sortStuff pointer
+    bubbleSort(arg -> start, arg -> size); // extracting data from sortStuff, calls bubble sort on corresponding section of array
+    return NULL;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -52,12 +67,32 @@ int main(int argc, char* argv[])
     
     ifstream infile;
     infile.open(inputFile);
-
     int size = distance(istream_iterator<int>(infile), istream_iterator<int>()); //gets num of integers in file
-    int* arr = createArray(infile, size);
+    int* arr = createArray(infile, size); // dynamic memory
     infile.close();
 
-    bubbleSort(arr, size);
+    pthread_t t0, t1, t2, t3, t4, t5, t6, t7;
+    pthread_t t[8] = {t0, t1, t2, t3, t4, t5, t6, t7};
+
+    // sections of array to sort
+    sortStuff ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7;
+    sortStuff ss[8] = {ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7};
+
+    for (int i = 0; i < 8; i++)
+    {
+        ss[i].start = &arr[125000 * i];
+        ss[i].size = 125000;
+    }
+
+    // setup pthreads
+    int iret0, iret1, iret2, iret3, iret4, iret5, iret6, iret7;
+    int iret[8] = {iret0, iret1, iret2, iret3, iret4, iret5, iret6, iret7};
+
+    for (int i = 0; i < 8; i++)
+    {
+        iret[i] = pthread_create( &t[i], NULL, bridge, (void*) &ss[i]);
+    }
+
 
     ofstream outfile;
 
@@ -79,7 +114,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < size; i++)
     {
-        outfile << arr[i] << " ";
+        outfile << arr[i] << endl;
     }
     outfile.close();
 
