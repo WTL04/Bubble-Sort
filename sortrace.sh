@@ -4,7 +4,7 @@
 # $ rm sortrace.log # start with fresh log file
 # $ ./sortrace.sh >> sortrace.log & # this may take an hour
 
-c++ mySort.cpp -o mysort -pthread # update files
+c++ mysort.cpp -o mysort -pthread # update files
 
 echo Generating 1000000 random numbers
 sleep 1
