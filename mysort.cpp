@@ -52,9 +52,12 @@ int* bubbleSort(int arr[], int size)
     return arr;
 }
 
-void merge(sortStuff & section1, sortStuff & section2)
+
+// merges two sections into 1
+sortStuff merge(sortStuff & section1, sortStuff & section2)
 {
-    int tempArr[section1.size + section2.size]; // .size because setions are sortStuff datatype
+    int newSize = section1.size + section2.size; // .size because setions are sortStuff datatype
+    int* tempArr = new int[newSize]; // dynamic memory array
 
     int i = 0; // index of section1
     int j = 0; // index of section2
@@ -92,35 +95,25 @@ void merge(sortStuff & section1, sortStuff & section2)
         k++;
     }
 
-    // copying merged elements from temp to section1
-    for (int i = 0; i < section1.size + section2.size; i++)
-    {
-        section1.start[i] = tempArr[i];
-    }
-    
+    section1.start = tempArr; // sets .start pointer to point to tempArr
+    section1.size = newSize;
+    return section1;
 }
 
-void mergeAll(sortStuff (&ss)[8], int numSections) // passing array as reference, array decay to pointers when passed to functions
+void mergeAll(sortStuff ss[])
 {
+    sortStuff sec1_2 = merge(ss[0], ss[1]);
+    sortStuff sec3_4 = merge(ss[2], ss[3]);
+    sortStuff sec5_6 = merge(ss[4], ss[5]);
+    sortStuff sec7_8 = merge(ss[6], ss[7]);
 
-    while (numSections > 1)
-    {
-        int merged = 0;
-        for (int i = 0; i < numSections; i += 2) // by 2 because you want adjacency sections
-        {
-            if (i + 1 < numSections)
-            {
-                merge(ss[i], ss[i+1]); // merges the two into ss[i]
-                ss[merged] = ss[i]; // sets merged section into original array
-                merged++;
+    sortStuff sec1_2_3_4 = merge(sec1_2, sec3_4);
+    sortStuff sec5_6_7_8 = merge(sec5_6, sec7_8);
 
-            }
-        } 
-        numSections = merged; // update num of sections after merging
-    }
+    sortStuff sortedArr = merge(sec1_2_3_4, sec5_6_7_8);
 
+    ss[0] = sortedArr;
 }
-
 
 void* bridge(void *ptr)
 {
@@ -136,9 +129,11 @@ int main(int argc, char* argv[])
     string outputFile = argv[2];
     
     ifstream infile;
-    infile.open(inputFile);
-    int size = distance(istream_iterator<int>(infile), istream_iterator<int>()); //gets num of integers in file
-    int* arr = createArray(infile, size); // dynamic memory array
+
+        infile.open(inputFile);
+        int size = distance(istream_iterator<int>(infile), istream_iterator<int>()); //gets num of integers in file
+        int* arr = createArray(infile, size); // dynamic memory array
+
     infile.close();
 
     pthread_t t0, t1, t2, t3, t4, t5, t6, t7;
@@ -149,8 +144,8 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < 8; i++)
     {
-        ss[i].start = &arr[125000 * i]; // accessing memory location
-        ss[i].size = 125000;
+        ss[i].start = &arr[size/8 * i]; // accessing memory location
+        ss[i].size = size/8;
     }
 
     // setup pthreads
@@ -161,51 +156,39 @@ int main(int argc, char* argv[])
         iret[i] = pthread_create( &t[i], NULL, bridge, (void*) &ss[i]);
     }
 
-    // Wait for all threads to finish
+    // wait for all threads to finish
     for (int i = 0; i < 8; i++)
     {
         pthread_join(t[i], NULL);
     }
     
     // merging all into one array
-    mergeAll(ss, 8);
+    mergeAll(ss);
 
     // Copying sorted elements back to the original array arr
     int idx = 0;
-    for (int i = 0; i < 8; i++) 
+    for (int j = 0; j < ss[0].size; j++) 
     {
-        for (int j = 0; j < ss[i].size; j++) 
-        {
-            arr[idx++] = ss[i].start[j];
-        }
+        arr[idx++] = ss[0].start[j];
     }
 
     ofstream outfile;
-
+    
     //clearing after every run
     outfile.open(outputFile, ios::trunc);
-    if (!outfile)
-    {
-        cerr << "Error: file not found" << endl;
-    }
     outfile.close();
 
     //opening in apend mode
     outfile.open(outputFile, ios::app);
-    if (!outfile)
-    {
-        cout << "Error: file not found" << endl;
-    }
 
-
-    for (int i = 0; i < size; i++)
-    {
-        outfile << arr[i] << endl;
-    }
+        for (int i = 0; i < size; i++)
+        {
+            outfile << arr[i] << endl;
+        }
+    
     outfile.close();
+
+
     delete[] arr; //prevent memory leak
     return 0;
 }
-
-// c++ mysort.cpp -o mysort
-// ./mysort numbers.dat sorted.out
